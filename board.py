@@ -7,35 +7,6 @@ class C4Board:
         self.gameOver = False
 
     @staticmethod
-    def fromBitState(bitstate):
-        board = C4Board()
-        print(bin(bitstate))
-        cols = list((bitstate >> i) & 0x7F for i in range(0, 49, 7))
-
-        for x in range(len(cols)):
-            col = cols[x]
-            size = 7
-            while col < 2 ** size:
-                size -= 1
-            print(size)
-
-            for y in range(size):
-                col = cols[x]
-                board.state[x][y] = (col & 1) + 1
-                board.tops[x] += 1
-                cols[x] >>= 1
-
-        #  .  .  .  .  .  .  .  TOP
-        #  5 12 19 26 33 40 47
-        #  4 11 18 25 32 39 46
-        #  3 10 17 24 31 38 45
-        #  2  9 16 23 30 37 44
-        #  1  8 15 22 29 36 43
-        #  0  7 14 21 28 35 42  BOTTOM
-
-        return board
-
-    @staticmethod
     def fromMoves(moves):
         board = C4Board()
         moves = str(moves)
