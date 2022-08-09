@@ -1,11 +1,21 @@
 class BitBoard:
-    def __init__(self):
-        self.curr = 1
-        self.winner = None
-        self.gameOver = False
-        self.bitState = 0
-        self.mask = 0
-        self.moves = 0
+    def __init__(self, state=0, mask=0, moves=0):
+        self.state = state
+        self.mask = mask
+        self.moves = moves
+
+    def copy(self):
+        return BitBoard(self.state, self.mask, self.moves)
+
+    def playMove(self, col):
+        if not self.canPlay(col):
+            return
+        self.state ^= self.mask
+        self.mask |= self.mask + bot_mask(col)
+        self.moves += 1
+
+    def canPlay(self, col):
+        return self.mask != self.mask | top_mask(col)
 
     @staticmethod
     def fromMoves(moves):
@@ -14,26 +24,30 @@ class BitBoard:
         for m in moves:
             p = int(m) - 1
             board.playMove(p)
-
-        printBoard(board.bitState, board.mask)
-
-        # print('state:')
-        # printBits(board.bitState)
-        # print('mask:')
-        # printBits(board.mask)
-
         return board
 
-    def playMove(self, col):
-        if self.cantPlay(col):
-            return
-        self.bitState ^= self.mask
-        self.mask |= self.mask + bot_mask(col)
-        self.moves += 1
-        pass
+    def print(self):
+        bits = self.state
+        mask = self.mask
 
-    def cantPlay(self, col):
-        return self.mask == self.mask | top_mask(col)
+        P1 = '\033[0;31mo '
+        P2 = '\033[0;33mx '
+        EM = '\033[0;39m. '
+
+        bcols = list((bits >> i) & 0x7F for i in range(0, 49, 7))
+        mcols = list((mask >> i) & 0x7F for i in range(0, 49, 7))
+
+        boardStrs = [''] * 6
+        print()
+        for y in range(6):
+            for x in range(7):
+                m = (mcols[x] >> y) & 1
+                b = (bcols[x] >> y) & 1
+                boardStrs[y] += P2 if b else P1 if m else EM
+        boardStrs = boardStrs[::-1]
+
+        print('\n'.join(boardStrs))
+        print('\033[0;39m')
 
 
 def top_mask(col):
@@ -61,25 +75,5 @@ def printBits(num):
         print(ps)
 
 
-def printBoard(bits, mask):
-    P1 = '\033[0;31m'
-    P2 = '\033[0;33m'
-    EM = '\033[0;39m'
-
-    bcols = list((bits >> i) & 0x7F for i in range(0, 49, 7))
-    mcols = list((mask >> i) & 0x7F for i in range(0, 49, 7))
-
-    # for mcol in mcols:
-    #     print(format(mcol, 'b'))
-
-    boardStrs = [''] * 6
-    for y in range(6):
-        for x in range(7):
-            m = (mcols[x] >> y) & 1
-            b = (bcols[x] >> y) & 1
-            boardStrs[y] += (P2 + 'o' if b else P1 +
-                             'x' if m else EM + '.') + ' '
-    boardStrs = boardStrs[::-1]
-
-    for b in boardStrs:
-        print(b)
+board = BitBoard.fromMoves(2252576253462244111563365343671351441)
+board.print()
