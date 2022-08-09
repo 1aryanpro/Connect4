@@ -10,12 +10,19 @@ class BitBoard:
     def playMove(self, col):
         if not self.canPlay(col):
             return
-        self.state ^= self.mask
         self.mask |= self.mask + bot_mask(col)
         self.moves += 1
+        self.state ^= self.mask
 
     def canPlay(self, col):
         return self.mask != self.mask | top_mask(col)
+
+    def playableMoves(self):
+        cols = []
+        for i in range(7):
+            if self.canPlay(i):
+                cols.append(i)
+        return cols
 
     @staticmethod
     def fromMoves(moves):
@@ -26,8 +33,29 @@ class BitBoard:
             board.playMove(p)
         return board
 
-    def print(self):
+    def checkAligned(self):
         bits = self.state
+
+        def testDir(func):
+            fbits = func(bits)
+            doubles = bits & fbits
+            ffdoubles = func(func(doubles))
+            doubles = doubles & ffdoubles
+            if doubles > 0:
+                return True
+            return False
+
+        verti = testDir(lambda b: b >> 1)
+        horiz = testDir(lambda b: b >> 7)
+        diag1 = testDir(lambda b: b >> 6)
+        diag2 = testDir(lambda b: b >> 8)
+
+        if verti or horiz or diag1 or diag2:
+            return True
+        return False
+
+    def print(self):
+        bits = self.state if self.moves & 1 else self.state ^ self.mask
         mask = self.mask
 
         P1 = '\033[0;31mo '
@@ -38,7 +66,6 @@ class BitBoard:
         mcols = list((mask >> i) & 0x7F for i in range(0, 49, 7))
 
         boardStrs = [''] * 6
-        print()
         for y in range(6):
             for x in range(7):
                 m = (mcols[x] >> y) & 1
@@ -63,16 +90,21 @@ def col_mask(col):
 
 
 def printBits(num):
-    cols = list((num >> i) & 0x7F for i in range(0, 49, 7))
-    colStrs = []
-    for col in cols:
-        colStrs.append(format(col, '06b'))
+    P1 = '\033[0;31m'
+    EM = '\033[0;39m'
 
-    for i in range(6):
-        ps = ''
-        for c in colStrs:
-            ps += c[i]
-        print(ps)
+    bcols = list((num >> i) & 0x7F for i in range(0, 49, 7))
+
+    boardStrs = [''] * 6
+    for y in range(6):
+        for x in range(7):
+            b = (bcols[x] >> y) & 1
+            boardStrs[y] += P1 if b else EM
+            boardStrs[y] += '1' if b else '0'
+    boardStrs = boardStrs[::-1]
+
+    print('\n'.join(boardStrs))
+    print(EM)
 
 
 board = BitBoard.fromMoves(2252576253462244111563365343671351441)
