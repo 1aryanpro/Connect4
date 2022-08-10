@@ -7,15 +7,22 @@ class BitBoard:
     def copy(self):
         return BitBoard(self.state, self.mask, self.moves)
 
+    def nbmoves(self):
+        nonplayed = 42 - self.moves
+        nonplayed = (nonplayed >> 1)
+        return 42 - self.moves
+
     def playMove(self, col):
         if not self.canPlay(col):
             return
-        self.mask |= self.mask + bot_mask(col)
-        self.moves += 1
-        self.state ^= self.mask
+        board = self.copy()
+        board.mask |= self.mask + (1 << col * 7)
+        board.moves += 1
+        board.state ^= board.mask
+        return board
 
     def canPlay(self, col):
-        return self.mask != self.mask | top_mask(col)
+        return self.mask != self.mask | ((1 << 5) << col * 7)
 
     def playableMoves(self):
         cols = []
@@ -30,10 +37,10 @@ class BitBoard:
         moves = str(moves)
         for m in moves:
             p = int(m) - 1
-            board.playMove(p)
+            board = board.playMove(p)
         return board
 
-    def checkAligned(self):
+    def checkWon(self):
         bits = self.state
 
         def testDir(func):
@@ -105,7 +112,3 @@ def printBits(num):
 
     print('\n'.join(boardStrs))
     print(EM)
-
-
-board = BitBoard.fromMoves(2252576253462244111563365343671351441)
-board.print()
